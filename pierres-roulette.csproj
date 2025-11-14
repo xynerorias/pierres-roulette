@@ -2,9 +2,15 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
+        <AssemblyName>PierresRoulette</AssemblyName>
         <RootNamespace>pierres_roulette</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <NoWarn>CS9057</NoWarn>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+    </ItemGroup>
 
 </Project>
