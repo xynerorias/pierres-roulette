@@ -1,3 +1,4 @@
+using GenericModConfigMenu;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -13,6 +14,92 @@ internal sealed class ModEntry : Mod
     {
         _config = helper.ReadConfig<ModConfig>();
         helper.Events.Display.MenuChanged += MenuChanged;
+        helper.Events.GameLoop.GameLaunched += GameLaunched;
+    }
+
+    private void GameLaunched(object? sender, GameLaunchedEventArgs eventArgs)
+    {
+        // get Generic Mod Config Menu's API (if it's installed)
+        var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+        if (configMenu is null)
+            return;
+
+        // register mod
+        configMenu.Register(
+            ModManifest,
+            () => _config = new ModConfig(),
+            () => Helper.WriteConfig(_config)
+        );
+
+        // add some config options
+        configMenu.AddBoolOption(
+            ModManifest,
+            name: () => "Enable Mod",
+            tooltip: () =>
+                "Master switch for the mod. Nothing happens if disabled.\n" +
+                "Default : true",
+            getValue: () => _config!.ModEnabled,
+            setValue: value => _config!.ModEnabled = value
+        );
+
+        configMenu.AddTextOption(
+            ModManifest,
+            name: () => "Shop Owners",
+            tooltip: () =>
+                "Comma-separated list of ShopId values for shops affected by the mod.\n" +
+                "See the wiki for a list of available IDs: https://stardewvalleywiki.com/Modding:Shops\n" +
+                "Default : SeedShop, Sandy",
+            getValue: () => string.Join(", ", _config!.Owners),
+            setValue: value => _config!.Owners = value.Split(',').Select(s => s.Trim()).ToArray()
+        );
+
+        configMenu.AddBoolOption(
+            ModManifest,
+            name: () => "Affect Seeds",
+            tooltip: () =>
+                "Enable/disable seeds being affected.\n" +
+                "Default : true",
+            getValue: () => _config!.SeedsEnabled,
+            setValue: value => _config!.SeedsEnabled = value
+        );
+
+        configMenu.AddNumberOption(
+            ModManifest,
+            name: () => "Seed Stock",
+            tooltip: () =>
+                "How much seeds does the shops have in stock every day. Does nothing if SeedsEnabled is false.\n" +
+                "0 clears the stock completely. Max is 64.\n" +
+                "Default : 4",
+            getValue: () => _config!.SeedStock,
+            setValue: value => _config!.SeedStock = value,
+            min: 0,
+            max: 64,
+            interval: 1
+        );
+
+        configMenu.AddBoolOption(
+            ModManifest,
+            name: () => "Affect Saplings",
+            tooltip: () =>
+                "Enable/disable saplings being affected.\n" +
+                "Default : true",
+            getValue: () => _config!.SaplingsEnabled,
+            setValue: value => _config!.SaplingsEnabled = value
+        );
+
+        configMenu.AddNumberOption(
+            ModManifest,
+            name: () => "Sapling Stock",
+            tooltip: () =>
+                "How much saplings does the shops have in stock every day. Does nothing if SaplingsEnabled is false.\n" +
+                "0 clears the stock completely. Max is 64.\n" +
+                "Default : 2",
+            getValue: () => _config!.SaplingStock,
+            setValue: value => _config!.SaplingStock = value,
+            min: 0,
+            max: 64,
+            interval: 1
+        );
     }
 
     private void MenuChanged(object? sender, MenuChangedEventArgs eventArgs)
@@ -86,8 +173,8 @@ internal sealed class ModEntry : Mod
         if (amount < 0)
         {
             Monitor.Log(
-                "[Pierre's Roulette] Not removing items of category " +
-                category + ". Stock config is negative (disabled)", LogLevel.Info);
+                "[Pierre's Roulette] Stock amount for " +
+                category + " is invalid : " + amount, LogLevel.Error);
             return false;
         }
 

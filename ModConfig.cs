@@ -15,15 +15,15 @@ public sealed class ModConfig
     //Default: true
     public bool SeedsEnabled { get; set; } = true;
 
+    // How much seeds does the shops have in stock every day. Does nothing if SeedsEnabled is false.
+    // Default: 4
+    public int SeedStock { get; set; } = 4;
+
     // Enable/disable saplings being affected
     // Default: true
     public bool SaplingsEnabled { get; set; } = true;
 
-    // How much seeds does the shops have in stock every day. Set to -1 to disable. Does nothing if SeedsEnabled is false.
-    // Default: 5
-    public int SeedStock { get; set; } = 4;
-
-    //How much saplings does the shop have in stock every day. Set to -1 to disable. Does nothing if SaplingsEnabled is false.
+    //How much saplings does the shop have in stock every day. Does nothing if SaplingsEnabled is false.
     // Default: 2
-    public int SaplingStock { get; set; } = -1;
+    public int SaplingStock { get; set; } = 2;
 }
