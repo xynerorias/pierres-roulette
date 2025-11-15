@@ -35,48 +35,38 @@ internal sealed class ModEntry : Mod
             seed is Item { Category: -74 } item && !item.Name.Contains("Sapling"));
         var saplings = shopMenu.forSale.FindAll(sapling =>
             sapling is Item { Category: -74 } item && item.Name.Contains("Sapling"));
-        var owners = shopMenu.ShopData.Owners;
-        owners.Remove(owners.FirstOrDefault()); // Remove default owner (always "None")
+        var shopId = shopMenu.ShopId;
         var rnd = new Random(Game1.Date.TotalDays + Game1.GetSaveGameName().GetHashCode());
 
-        Monitor.Log("[Pierre's Roulette] Shop seeds: " + string.Join(", ", seeds.Select(s => (s as Item)?.Name)),
-            LogLevel.Debug);
-        Monitor.Log("[Pierre's Roulette] Shop saplings: " + string.Join(", ", saplings.Select(s => (s as Item)?.Name)),
-            LogLevel.Debug);
-        Monitor.Log("[Pierre's Roulette] Shop owners: " + string.Join(", ", owners.Select(o => o.Name)),
-            LogLevel.Debug);
+        Monitor.Log("[Pierre's Roulette] Shop: " + shopId);
+        Monitor.Log("[Pierre's Roulette] Shop seeds: " + string.Join(", ", seeds.Select(s => (s as Item)?.Name)));
+        Monitor.Log("[Pierre's Roulette] Shop saplings: " + string.Join(", ", saplings.Select(s => (s as Item)?.Name)));
 
-        if (!owners.Any(o => _config.Owners.Contains(o.Name)))
+        if (!_config.Owners.Contains(shopId))
             return;
 
+        var removedItems = false;
         if (_config.SeedsEnabled)
-        {
-            RemoveRandomItems(rnd, _config.SeedStock, seeds, "Seeds");
-            Monitor.Log(
-                "[Pierre's Roulette] Remaining seeds: " + string.Join(", ", seeds.Select(s => (s as Item)?.Name)),
-                LogLevel.Debug);
-        }
-
+            removedItems = removedItems || RemoveRandomItems(rnd, _config.SeedStock, seeds, "Seeds");
         if (_config.SaplingsEnabled)
-        {
-            RemoveRandomItems(rnd, _config.SaplingStock, saplings, "Saplings");
-            Monitor.Log(
-                "[Pierre's Roulette] Remaining saplings: " +
-                string.Join(", ", saplings.Select(s => (s as Item)?.Name)),
-                LogLevel.Debug);
-        }
+            removedItems = removedItems || RemoveRandomItems(rnd, _config.SaplingStock, saplings, "Saplings");
+        if (!removedItems)
+            return;
 
-        Monitor.Log("[Pierre's Roulette] Old stock information: " + string.Join(", ",
-            shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)), LogLevel.Debug);
+        Monitor.Log("[Pierre's Roulette] Remaining seeds: " +
+                    string.Join(", ", seeds.Select(s => (s as Item)?.Name)));
+        Monitor.Log("[Pierre's Roulette] Remaining saplings: " +
+                    string.Join(", ", saplings.Select(s => (s as Item)?.Name)));
+        Monitor.Log("[Pierre's Roulette] Old stock information: " +
+                    string.Join(", ", shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)));
 
         var stockDict = new Dictionary<ISalable, ItemStockInformation>(shopMenu.itemPriceAndStock);
         var stockList = new List<ISalable>(shopMenu.forSale);
         var toRemove = new List<ISalable>(stockList.Where(i =>
             i is Item { Category: -74 } && !seeds.Contains(i) && !saplings.Contains(i)));
 
-        Monitor.Log("[Pierre's Roulette] Items to remove: " + string.Join(", ",
-            toRemove.Select(i => (i as Item)?.Name)), LogLevel.Debug);
-        Monitor.Log("[Pierre's Roulette] Removing items...", LogLevel.Debug);
+        Monitor.Log("[Pierre's Roulette] Items to remove: " +
+                    string.Join(", ", toRemove.Select(i => (i as Item)?.Name)));
 
         foreach (var item in toRemove)
         {
@@ -88,21 +78,32 @@ internal sealed class ModEntry : Mod
         shopMenu.forSale = stockList;
 
         Monitor.Log("[Pierre's Roulette] New stock information: " + string.Join(", ",
-            shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)), LogLevel.Debug);
+            shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)));
     }
 
-    private void RemoveRandomItems(Random rnd, int amount, List<ISalable> items, string category)
+    private bool RemoveRandomItems(Random rnd, int amount, List<ISalable> items, string category)
     {
         if (amount < 0)
         {
             Monitor.Log(
-                "[Pierre's Roulette] Not removing items of category " + category, LogLevel.Debug);
-            return;
+                "[Pierre's Roulette] Not removing items of category " +
+                category + ". Stock config is negative (disabled)", LogLevel.Info);
+            return false;
         }
 
-        if (amount > items.Count)
+        if (amount >= items.Count)
         {
-            Monitor.Log("[Pierre's Roulette] More items to remove than stock, removing entire stock", LogLevel.Debug);
+            Monitor.Log("Pierres' Roulette] Stock config for " +
+                        category + " is greater or equal to merchant's stock. Skipping...",
+                LogLevel.Info);
+            return false;
+        }
+
+        if (amount == 0)
+        {
+            Monitor.Log("[Pierre's Roulette] Stock config for " +
+                        category + " is set to 0, removing entire stock...",
+                LogLevel.Info);
             items.Clear();
         }
         else
@@ -110,9 +111,11 @@ internal sealed class ModEntry : Mod
             while (items.Count > amount)
             {
                 var indexToRemove = rnd.Next(items.Count);
-                Monitor.Log($"Removed item: {items[indexToRemove].Name}", LogLevel.Debug);
+                Monitor.Log($"Removed item: {items[indexToRemove].Name}");
                 items.RemoveAt(indexToRemove);
             }
         }
+
+        return true;
     }
 }
