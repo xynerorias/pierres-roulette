@@ -24,7 +24,7 @@ Visit the [Nexus page](https://www.nexusmods.com/stardewvalley/mods/10826) for m
 ## Installation
 
 * Install [SMAPI](https://smapi.io/).
-* Install the mod by downloading it either from [the Nexus](https://www.nexusmods.com/stardewvalley/mods/10826), from the releases or by building it through source.
+* Install the mod by downloading it either from [the Nexus](https://www.nexusmods.com/stardewvalley/mods/10826), or by building it through source.
 <br/>
 
 If you do not know how to install mods, [refer to this guide](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started)<br/>
