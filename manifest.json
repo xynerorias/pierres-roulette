@@ -4,7 +4,9 @@
   "Version": "1.1",
   "Description": "Makes Pierre's stock of seed random everyday in an attempt to declutter it when you have lots of crop mods.",
   "UniqueID": "xynerorias.pierresroulette",
-  "EntryDll": "Pierre's Roulette.dll",
+  "EntryDll": "PierresRoulette.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [ "Nexus:10826" ]
+  "UpdateKeys": [
+    "Nexus:10826"
+  ]
 }
