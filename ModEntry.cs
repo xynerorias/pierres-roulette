@@ -125,9 +125,11 @@ internal sealed class ModEntry : Mod
         var shopId = shopMenu.ShopId;
         var rnd = new Random(Game1.Date.TotalDays + Game1.GetSaveGameName().GetHashCode());
 
-        Monitor.Log("[Pierre's Roulette] Shop: " + shopId);
-        Monitor.Log("[Pierre's Roulette] Shop seeds: " + string.Join(", ", seeds.Select(s => (s as Item)?.Name)));
-        Monitor.Log("[Pierre's Roulette] Shop saplings: " + string.Join(", ", saplings.Select(s => (s as Item)?.Name)));
+        Monitor.Log("[Pierre's Roulette] Shop: " + shopId, LogLevel.Debug);
+        Monitor.Log("[Pierre's Roulette] Shop seeds: " + string.Join(", ", seeds.Select(s => (s as Item)?.Name)),
+            LogLevel.Debug);
+        Monitor.Log("[Pierre's Roulette] Shop saplings: " + string.Join(", ", saplings.Select(s => (s as Item)?.Name)),
+            LogLevel.Debug);
 
         if (!_config.Owners.Contains(shopId))
             return;
@@ -141,11 +143,11 @@ internal sealed class ModEntry : Mod
             return;
 
         Monitor.Log("[Pierre's Roulette] Remaining seeds: " +
-                    string.Join(", ", seeds.Select(s => (s as Item)?.Name)));
+                    string.Join(", ", seeds.Select(s => (s as Item)?.Name)), LogLevel.Debug);
         Monitor.Log("[Pierre's Roulette] Remaining saplings: " +
-                    string.Join(", ", saplings.Select(s => (s as Item)?.Name)));
+                    string.Join(", ", saplings.Select(s => (s as Item)?.Name)), LogLevel.Debug);
         Monitor.Log("[Pierre's Roulette] Old stock information: " +
-                    string.Join(", ", shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)));
+                    string.Join(", ", shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)), LogLevel.Debug);
 
         var stockDict = new Dictionary<ISalable, ItemStockInformation>(shopMenu.itemPriceAndStock);
         var stockList = new List<ISalable>(shopMenu.forSale);
@@ -153,7 +155,7 @@ internal sealed class ModEntry : Mod
             i is Item { Category: -74 } && !seeds.Contains(i) && !saplings.Contains(i)));
 
         Monitor.Log("[Pierre's Roulette] Items to remove: " +
-                    string.Join(", ", toRemove.Select(i => (i as Item)?.Name)));
+                    string.Join(", ", toRemove.Select(i => (i as Item)?.Name)), LogLevel.Debug);
 
         foreach (var item in toRemove)
         {
@@ -165,7 +167,7 @@ internal sealed class ModEntry : Mod
         shopMenu.forSale = stockList;
 
         Monitor.Log("[Pierre's Roulette] New stock information: " + string.Join(", ",
-            shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)));
+            shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)), LogLevel.Debug);
     }
 
     private bool RemoveRandomItems(Random rnd, int amount, List<ISalable> items, string category)
@@ -181,16 +183,14 @@ internal sealed class ModEntry : Mod
         if (amount >= items.Count)
         {
             Monitor.Log("Pierres' Roulette] Stock config for " +
-                        category + " is greater or equal to merchant's stock. Skipping...",
-                LogLevel.Info);
+                        category + " is greater or equal to merchant's stock. Skipping...", LogLevel.Debug);
             return false;
         }
 
         if (amount == 0)
         {
             Monitor.Log("[Pierre's Roulette] Stock config for " +
-                        category + " is set to 0, removing entire stock...",
-                LogLevel.Info);
+                        category + " is set to 0, removing entire stock...", LogLevel.Debug);
             items.Clear();
         }
         else
@@ -198,7 +198,7 @@ internal sealed class ModEntry : Mod
             while (items.Count > amount)
             {
                 var indexToRemove = rnd.Next(items.Count);
-                Monitor.Log($"Removed item: {items[indexToRemove].Name}");
+                Monitor.Log($"Removed item: {items[indexToRemove].Name}", LogLevel.Debug);
                 items.RemoveAt(indexToRemove);
             }
         }
