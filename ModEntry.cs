@@ -3,6 +3,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
+using Object = StardewValley.Object;
 
 namespace pierres_roulette;
 
@@ -119,9 +120,9 @@ internal sealed class ModEntry : Mod
         }
 
         var seeds = shopMenu.forSale.FindAll(seed =>
-            seed is Item { Category: -74 } item && !item.Name.Contains("Sapling"));
+            seed is Object obj && IsSeed(obj));
         var saplings = shopMenu.forSale.FindAll(sapling =>
-            sapling is Item { Category: -74 } item && item.Name.Contains("Sapling"));
+            sapling is Object obj && IsSapling(obj));
         var shopId = shopMenu.ShopId;
         var rnd = new Random(Game1.Date.TotalDays + Game1.GetSaveGameName().GetHashCode());
 
@@ -134,13 +135,13 @@ internal sealed class ModEntry : Mod
         if (!_config.Owners.Contains(shopId))
             return;
 
-        var removedItems = false;
-        if (_config.SeedsEnabled)
-            removedItems = removedItems || RemoveRandomItems(rnd, _config.SeedStock, seeds, "Seeds");
-        if (_config.SaplingsEnabled)
-            removedItems = removedItems || RemoveRandomItems(rnd, _config.SaplingStock, saplings, "Saplings");
-        if (!removedItems)
+        var removedSeedItems = _config.SeedsEnabled
+                               && RemoveRandomItems(rnd, _config.SeedStock, seeds, "Seeds");
+        var removedSaplingItems = _config.SaplingsEnabled
+                                  && RemoveRandomItems(rnd, _config.SaplingStock, saplings, "Saplings");
+        if (!removedSeedItems && !removedSaplingItems)
             return;
+
 
         Monitor.Log("[Pierre's Roulette] Remaining seeds: " +
                     string.Join(", ", seeds.Select(s => (s as Item)?.Name)), LogLevel.Debug);
@@ -152,7 +153,7 @@ internal sealed class ModEntry : Mod
         var stockDict = new Dictionary<ISalable, ItemStockInformation>(shopMenu.itemPriceAndStock);
         var stockList = new List<ISalable>(shopMenu.forSale);
         var toRemove = new List<ISalable>(stockList.Where(i =>
-            i is Item { Category: -74 } && !seeds.Contains(i) && !saplings.Contains(i)));
+            i is Object obj && (IsSeed(obj) || IsSapling(obj)) && !seeds.Contains(i) && !saplings.Contains(i)));
 
         Monitor.Log("[Pierre's Roulette] Items to remove: " +
                     string.Join(", ", toRemove.Select(i => (i as Item)?.Name)), LogLevel.Debug);
@@ -168,6 +169,39 @@ internal sealed class ModEntry : Mod
 
         Monitor.Log("[Pierre's Roulette] New stock information: " + string.Join(", ",
             shopMenu.itemPriceAndStock.Keys.Select(i => (i as Item)?.Name)), LogLevel.Debug);
+    }
+
+    private static bool IsSeed(Object obj)
+    {
+        // Crops
+        if (Game1.cropData != null && Game1.cropData.ContainsKey(obj.ItemId))
+            return true;
+
+        // Cornucopia-specific seed tags
+        if (obj.HasContextTag("cornucopia_crop_seed"))
+            return true;
+
+        return false;
+    }
+
+    private static bool IsSapling(Object obj)
+    {
+        // Fruit tree saplings, herb trees, and other bushes
+        if (Game1.fruitTreeData != null && Game1.fruitTreeData.ContainsKey(obj.ItemId))
+            return true;
+
+        // Cornucopia bush tags
+        if (obj.HasContextTag("cornucopia_bush_seed") || obj.HasContextTag("cornucopia_grape_planter"))
+            return true;
+
+        // Special case : grape starter when Cornucopia is installed
+        // CMC removes the crop entry of 301 and adds its own grape bush
+        // If CMC is installed, the grape starter won't have a crop entry anymore thus not caught in the IsSeed method
+        // So we check for the item ID directly because that will mean it's classified as a bush
+        if (obj.ItemId == "301" && (Game1.cropData == null || !Game1.cropData.ContainsKey(obj.ItemId)))
+            return true;
+
+        return false;
     }
 
     private bool RemoveRandomItems(Random rnd, int amount, List<ISalable> items, string category)
